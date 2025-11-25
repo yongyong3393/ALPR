@@ -5,7 +5,7 @@ class UIManager:
         self.window_name = window_name
         cv2.namedWindow(self.window_name)
 
-    def show(self, frame, ocr_text: str | None = None, box = None):
+    def show(self, frame, box = None, ocr_text: str | None = None):
         # Overlay text on the frame
         if box:
             x1, y1, x2, y2 = box["bbox"]

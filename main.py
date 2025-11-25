@@ -1,9 +1,6 @@
-from yolo_detector import load_yolo, detect
-from ocr_module import OCRWorker
-from streamer import VideoStream
-from ui import UIManager
-
-weight_path = "./yolo_weight/best.pt"
+from alpr_worker import ALPRWorker
+from video_stream import VideoStream
+from ui_manager import UIManager
 
 def main():
 
@@ -11,18 +8,15 @@ def main():
     Initialize modules
     '''
 
-    # 1. Load yolov5 model
-    model = load_yolo(weight_path)
+    # 1. Load ALPR worker (YOLO + OCR)
+    alpr_worker = ALPRWorker()
+    alpr_worker.start()
 
-    # 2. Load OCR worker
-    ocr_worker = OCRWorker(lang="korean")
-    ocr_worker.start()
-
-    # 3. Load webcam stream
+    # 2. Load webcam stream
     stream = VideoStream()
 
-    # 4. Load UI manager
-    ui = UIManager(window_name="Webcam")
+    # 3. Load UI manager
+    ui_manager = UIManager(window_name="Webcam")
 
     '''
     main loop
@@ -40,29 +34,23 @@ def main():
             print("[ERROR] Cannot read a frame from webcam")
             break
         
-        # 2. YOLO detection & ALPR every N frames
+        # 2. ALPR every N frames
         frame_idx += 1
         if frame_idx % N == 0:
-            boxes = detect(model, frame)
-            if boxes:
-                best_box = max(boxes, key=lambda d: (d["bbox"][2]-d["bbox"][0]) * (d["bbox"][3]-d["bbox"][1]))
-                last_box = best_box
-                x1, y1, x2, y2 = best_box["bbox"]
-                plate_crop = frame[y1:y2, x1:x2]
-                ocr_worker.submit_frame(plate_crop)
+            alpr_worker.submit_frame(frame)
 
         # 3. Get latest OCR results
-        last_text = ocr_worker.get_latest_text()
+        last_box, last_text = alpr_worker.get_latest_result()
 
         # 4. Visualize results on UI
-        key = ui.show(frame, last_text, last_box)
+        key = ui_manager.show(frame, last_box, last_text)
         if key == ord('q'):
             break
     
     ''' Cleanup '''
-    ocr_worker.stop()
+    alpr_worker.stop()
     stream.release()
-    ui.destroy()
+    ui_manager.destroy()
 
 if __name__ == "__main__":
     main()
