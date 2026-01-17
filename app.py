@@ -61,7 +61,11 @@ class App:
         # ALPR every N frames
         self.frame_idx += 1
         if self.frame_idx % self.N == 0:
-            self.alpr_worker.submit_frame(frame)
+            roi = self.ui_manager.get_roi_rect()
+            if roi is None:
+                h, w = frame.shape[:2]
+                roi = (0, 0, w - 1, h - 1)
+            self.alpr_worker.submit_frame(frame, roi)
 
         # Get latest OCR results
         last_box, last_text = self.alpr_worker.get_latest_result()

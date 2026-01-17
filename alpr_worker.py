@@ -38,17 +38,18 @@ class ALPRWorker:
             self._thread.join(timeout=1.0)
             self._thread = None
     
-    def submit_frame(self, frame):
+    def submit_frame(self, frame, roi=None):
         if not self._running:
             return
+        payload = (frame, roi)
         try:
-            self.q.put_nowait(frame)
+            self.q.put_nowait(payload)
         except queue.Full:
             try:
                 self.q.get_nowait()
             except queue.Empty:
                 pass
-            self.q.put_nowait(frame)
+            self.q.put_nowait(payload)
     
     def get_latest_result(self):
         return self.latest_box, self.latest_text
@@ -56,12 +57,28 @@ class ALPRWorker:
     def _worker_loop(self):
         while self._running:
             try:
-                frame = self.q.get(timeout=0.1)
+                payload = self.q.get(timeout=0.1)
             except queue.Empty:
                 continue
             
             # 1. YOLO detection
-            boxes = self.yolo_detector.detect(frame)
+            frame, roi = payload
+            x1, y1, x2, y2 = roi
+            roi_frame = frame[y1:y2 + 1, x1:x2 + 1]
+            boxes = self.yolo_detector.detect(roi_frame)
+            if boxes:
+                boxes = [
+                    {
+                        **box,
+                        "bbox": (
+                            box["bbox"][0] + x1,
+                            box["bbox"][1] + y1,
+                            box["bbox"][2] + x1,
+                            box["bbox"][3] + y1,
+                        ),
+                    }
+                    for box in boxes
+                ]
             if not boxes:
                 self.latest_box = None
                 self.latest_text = None
