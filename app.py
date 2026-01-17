@@ -34,7 +34,7 @@ class App:
 
     def start(self):
         self._running = True
-        self.ui_manager.show()
+        self.ui_manager.showMaximized()
         self.timer.start()
         return self.qt_app.exec()
 
