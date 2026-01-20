@@ -1,8 +1,8 @@
-import threading
+﻿import threading
 import queue
 
-from yolo_detector import YoloDetector
-from ocr import OCR
+from .yolo_detector import YoloDetector
+from .ocr import OCR
 
 class ALPRWorker:
     """

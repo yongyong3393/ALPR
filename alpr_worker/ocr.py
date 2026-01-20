@@ -1,4 +1,4 @@
-import re
+﻿import re
 from paddleocr import PaddleOCR
 
 class OCR:

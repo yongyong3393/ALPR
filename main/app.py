@@ -1,14 +1,16 @@
-import sys
+﻿import sys
 from PySide6 import QtCore, QtWidgets
 
-from alpr_worker import ALPRWorker
-from video_stream import VideoStream
-from ui_manager import UIManager
+from alpr_worker.alpr_worker import ALPRWorker
+from source.video_stream import VideoStream
+from main.app_state import AppState
+from ui.ui_manager import UIManager
 
 
 class App:
     def __init__(self):
         self.qt_app = QtWidgets.QApplication(sys.argv)
+        self.state = AppState()
 
         # 1. Load ALPR worker (YOLO + OCR)
         self.alpr_worker = ALPRWorker()
@@ -65,6 +67,7 @@ class App:
             if roi is None:
                 h, w = frame.shape[:2]
                 roi = (0, 0, w - 1, h - 1)
+            self.state.roi_rect = roi
             self.alpr_worker.submit_frame(frame, roi)
 
         # Get latest OCR results
@@ -73,9 +76,11 @@ class App:
         # Visualize results on UI
         self.ui_manager.show_frame(frame, last_box, last_text)
 
+
 def main():
     app = App()
     return app.start()
+
 
 if __name__ == "__main__":
     raise SystemExit(main())
