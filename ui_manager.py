@@ -149,7 +149,7 @@ class UIManager(QtWidgets.QMainWindow):
     def __init__(self, window_name: str = "Webcam"):
         super().__init__()
         self.setWindowTitle(window_name)
-        self._build_toolbar()
+        self._build_menu()
 
         central = QtWidgets.QWidget()
         self.setCentralWidget(central)
@@ -185,15 +185,26 @@ class UIManager(QtWidgets.QMainWindow):
 
         self.resize(1600, 900)
 
-    def _build_toolbar(self):
-        toolbar = QtWidgets.QToolBar("Tools", self)
-        toolbar.setMovable(False)
-        self.addToolBar(toolbar)
+    def _build_menu(self):
+        menu_bar = self.menuBar()
 
+        source_menu = menu_bar.addMenu("Source")
+        self.source_webcam_action = QtGui.QAction("Webcam", self)
+        self.source_rtsp_action = QtGui.QAction("RTSP", self)
+        self.source_image_action = QtGui.QAction("Image File", self)
+        source_menu.addAction(self.source_webcam_action)
+        source_menu.addAction(self.source_rtsp_action)
+        source_menu.addAction(self.source_image_action)
+
+        tools_menu = menu_bar.addMenu("Tools")
         self.roi_action = QtGui.QAction("ROI 설정", self)
         self.roi_action.setCheckable(True)
         self.roi_action.toggled.connect(self._toggle_roi_mode)
-        toolbar.addAction(self.roi_action)
+        tools_menu.addAction(self.roi_action)
+
+        record_menu = menu_bar.addMenu("Record")
+        self.record_entry_action = QtGui.QAction("Entry Log", self)
+        record_menu.addAction(self.record_entry_action)
 
     def _toggle_roi_mode(self, enabled: bool):
         self.image_label.set_roi_mode(enabled)
