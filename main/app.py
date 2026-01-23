@@ -4,7 +4,7 @@ from PySide6 import QtCore, QtWidgets
 from alpr_worker.alpr_worker import ALPRWorker
 from source.video_stream import VideoStream
 from main.app_state import AppState
-from ui.ui_manager import UIManager
+from ui.main_window import MainWindow
 
 
 class App:
@@ -20,7 +20,7 @@ class App:
         self.stream = VideoStream()
 
         # 3. Load UI manager
-        self.ui_manager = UIManager(window_name="Webcam")
+        self.ui_manager = MainWindow(window_name="Webcam")
         self.ui_manager.closed.connect(self.stop)
 
         # main loop state

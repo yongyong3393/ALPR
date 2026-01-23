@@ -1,7 +1,8 @@
-﻿from PySide6 import QtCore, QtGui, QtWidgets
+﻿import cv2
+from PySide6 import QtCore, QtGui, QtWidgets
 
 
-class VideoView(QtWidgets.QLabel):
+class ImageLabel(QtWidgets.QLabel):
     roi_finalized = QtCore.Signal(tuple)
 
     def __init__(self):
@@ -141,3 +142,26 @@ class VideoView(QtWidgets.QLabel):
         x1, y1 = start
         x2, y2 = end
         return (min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2))
+
+    @staticmethod
+    def render_frame(frame, box=None):
+        if box:
+            x1, y1, x2, y2 = box["bbox"]
+            conf = box["conf"]
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            label = f"{conf:.2f}"
+            cv2.putText(
+                frame,
+                label,
+                (x1, y1 - 10),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                (0, 255, 0),
+                2,
+                cv2.LINE_AA,
+            )
+
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        h, w, ch = rgb.shape
+        bytes_per_line = ch * w
+        return QtGui.QImage(rgb.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)

@@ -1,10 +1,9 @@
 ﻿from PySide6 import QtCore, QtGui, QtWidgets
 
-from ui.renderer import render_frame
-from ui.video_view import VideoView
+from ui.image_label import ImageLabel
 
 
-class UIManager(QtWidgets.QMainWindow):
+class MainWindow(QtWidgets.QMainWindow):
     closed = QtCore.Signal()
 
     def __init__(self, window_name: str = "Webcam"):
@@ -25,7 +24,7 @@ class UIManager(QtWidgets.QMainWindow):
         self.plate_label.setStyleSheet("font-size: 28px; font-weight: 600;")
 
         # (2) Top-right: live stream
-        self.image_label = VideoView()
+        self.image_label = ImageLabel()
         self.image_label.roi_finalized.connect(self._on_roi_finalized)
 
         # Bottom placeholders
@@ -89,7 +88,7 @@ class UIManager(QtWidgets.QMainWindow):
             self.plate_label.setText("No plate detected")
 
         # (2) Update stream image
-        qimg = render_frame(frame, box)
+        qimg = ImageLabel.render_frame(frame, box)
         self.image_label.set_frame(qimg)
 
     def closeEvent(self, event):
