@@ -20,7 +20,7 @@ class App:
         self.stream = VideoStream()
 
         # 3. Load UI manager
-        self.ui_manager = MainWindow(window_name="Webcam")
+        self.ui_manager = MainWindow()
         self.ui_manager.closed.connect(self.stop)
 
         # main loop state

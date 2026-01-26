@@ -30,7 +30,9 @@ class ImageLabel(QtWidgets.QLabel):
     def get_roi_rect(self):
         return self._roi_rect
 
-    def set_frame(self, image: QtGui.QImage):
+    def set_frame(self, frame, box=None):
+        image = self.render_frame(frame, box)
+        
         img_w = image.width()
         img_h = image.height()
         label_w = self.width()

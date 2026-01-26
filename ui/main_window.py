@@ -6,11 +6,20 @@ from ui.image_label import ImageLabel
 class MainWindow(QtWidgets.QMainWindow):
     closed = QtCore.Signal()
 
-    def __init__(self, window_name: str = "Webcam"):
+    def __init__(self):
         super().__init__()
-        self.setWindowTitle(window_name)
+
+        # Components of the main window
+        # 1. Menu bar
+        # 2. Central widget with 2x2 grid layout
+        #    - (1, 1): recognized plate text
+        #    - (1, 2): live stream
+        #    - (2, x): placeholders
+
+        # 1. Menu bar
         self._build_menu()
 
+        # 2. Central widget with 2x2 grid layout
         central = QtWidgets.QWidget()
         self.setCentralWidget(central)
 
@@ -18,16 +27,16 @@ class MainWindow(QtWidgets.QMainWindow):
         grid.setContentsMargins(12, 12, 12, 12)
         grid.setSpacing(12)
 
-        # (1) Top-left: recognized plate text
+        # (1, 1): recognized plate text
         self.plate_label = QtWidgets.QLabel("No plate detected")
         self.plate_label.setAlignment(QtCore.Qt.AlignCenter)
         self.plate_label.setStyleSheet("font-size: 28px; font-weight: 600;")
 
-        # (2) Top-right: live stream
+        # (1, 2): live stream
         self.image_label = ImageLabel()
         self.image_label.roi_finalized.connect(self._on_roi_finalized)
 
-        # Bottom placeholders
+        # (2, x): placeholders
         self.placeholder_left = QtWidgets.QLabel()
         self.placeholder_left.setStyleSheet("background-color: #3a3a3a;")
         self.placeholder_right = QtWidgets.QLabel()
@@ -48,24 +57,34 @@ class MainWindow(QtWidgets.QMainWindow):
     def _build_menu(self):
         menu_bar = self.menuBar()
 
+        # 1. Source
         source_menu = menu_bar.addMenu("Source")
+
         self.source_webcam_action = QtGui.QAction("Webcam", self)
         self.source_rtsp_action = QtGui.QAction("RTSP", self)
         self.source_image_action = QtGui.QAction("Image File", self)
+
         source_menu.addAction(self.source_webcam_action)
         source_menu.addAction(self.source_rtsp_action)
         source_menu.addAction(self.source_image_action)
 
+        # 2. Tools
         tools_menu = menu_bar.addMenu("Tools")
+
         self.roi_action = QtGui.QAction("ROI 설정", self)
         self.roi_action.setCheckable(True)
         self.roi_action.toggled.connect(self._toggle_roi_mode)
+
         tools_menu.addAction(self.roi_action)
 
+        # 3. Record
         record_menu = menu_bar.addMenu("Record")
+
         self.record_entry_action = QtGui.QAction("Entry Log", self)
+
         record_menu.addAction(self.record_entry_action)
 
+    # Menu Callbacks
     def _toggle_roi_mode(self, enabled: bool):
         self.image_label.set_roi_mode(enabled)
         if enabled:
@@ -88,8 +107,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.plate_label.setText("No plate detected")
 
         # (2) Update stream image
-        qimg = ImageLabel.render_frame(frame, box)
-        self.image_label.set_frame(qimg)
+        self.image_label.set_frame(frame, box)
 
     def closeEvent(self, event):
         self.closed.emit()
