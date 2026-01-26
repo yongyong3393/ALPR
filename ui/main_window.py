@@ -6,6 +6,7 @@ from ui.image_label import ImageLabel
 class MainWindow(QtWidgets.QMainWindow):
     closed = QtCore.Signal()
     roi_finalized = QtCore.Signal(tuple)
+    source_selected = QtCore.Signal(str, object)
 
     def __init__(self):
         super().__init__()
@@ -62,9 +63,12 @@ class MainWindow(QtWidgets.QMainWindow):
         source_menu = menu_bar.addMenu("Source")
 
         self.source_webcam_action = QtGui.QAction("Webcam", self)
+        self.source_webcam_action.triggered.connect(self._webcam_action_callback)
         self.source_rtsp_action = QtGui.QAction("RTSP", self)
+        self.source_rtsp_action.triggered.connect(self._rtsp_action_callback)
         self.source_image_action = QtGui.QAction("Image File", self)
-
+        self.source_image_action.triggered.connect(self._image_action_callback)
+        
         source_menu.addAction(self.source_webcam_action)
         source_menu.addAction(self.source_rtsp_action)
         source_menu.addAction(self.source_image_action)
@@ -74,7 +78,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.roi_action = QtGui.QAction("ROI 설정", self)
         self.roi_action.setCheckable(True)
-        self.roi_action.toggled.connect(self._toggle_roi_mode)
+        self.roi_action.toggled.connect(self._roi_action_callback)
 
         tools_menu.addAction(self.roi_action)
 
@@ -86,7 +90,22 @@ class MainWindow(QtWidgets.QMainWindow):
         record_menu.addAction(self.record_entry_action)
 
     # Menu Callbacks
-    def _toggle_roi_mode(self, enabled: bool):
+    def _webcam_action_callback(self):
+        self.source_selected.emit("webcam", None)
+
+    def _rtsp_action_callback(self):
+        source_value = self._prompt_rtsp_url()
+        if not source_value:
+            return
+        self.source_selected.emit("rtsp", source_value)
+
+    def _image_action_callback(self):
+        source_value = self._prompt_image_path()
+        if not source_value:
+            return
+        self.source_selected.emit("image", source_value)
+
+    def _roi_action_callback(self, enabled: bool):
         self.image_label.set_roi_mode(enabled)
         if enabled:
             self.statusBar().showMessage("스트리밍 화면에서 드래그하여 ROI를 지정하세요.")
@@ -98,6 +117,24 @@ class MainWindow(QtWidgets.QMainWindow):
             self.roi_action.setChecked(False)
         self.roi_finalized.emit(roi)
 
+    def _prompt_rtsp_url(self):
+        text, ok = QtWidgets.QInputDialog.getText(
+            self,
+            "RTSP Source",
+            "RTSP URL:",
+        )
+        return text.strip() if ok and text.strip() else None
+
+    def _prompt_image_path(self):
+        path, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self,
+            "Select Image File",
+            "",
+            "Images (*.png *.jpg *.jpeg)",
+        )
+        return path if path else None
+
+    # UI Update
     def show_frame(self, frame, box=None, ocr_text: str | None = None):
         # (1) Update plate text
         if ocr_text:

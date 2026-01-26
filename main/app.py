@@ -2,7 +2,7 @@
 from PySide6 import QtCore, QtWidgets
 
 from alpr_worker.alpr_worker import ALPRWorker
-from source.video_stream import VideoStream
+from source.video_stream import ImageStream, RTSPStream, WebcamStream
 from main.app_state import AppState
 from ui.main_window import MainWindow
 
@@ -17,12 +17,13 @@ class App:
         self.alpr_worker.start()
 
         # 2. Load webcam stream
-        self.stream = VideoStream()
+        self.stream = WebcamStream()
 
         # 3. Load UI manager
         self.ui_manager = MainWindow()
         self.ui_manager.closed.connect(self.stop)
         self.ui_manager.roi_finalized.connect(self._on_roi_finalized)
+        self.ui_manager.source_selected.connect(self._on_source_selected)
 
         # main loop state
         self.frame_idx = 0
@@ -78,6 +79,33 @@ class App:
 
     def _on_roi_finalized(self, roi):
         self.state.roi_rect = roi
+
+    def _on_source_selected(self, source_type, source_value):
+        if source_type == "webcam":
+            self._switch_stream(WebcamStream(), "webcam", None)
+            return
+        elif source_type == "rtsp":
+            if not source_value:
+                return
+            self._switch_stream(RTSPStream(source_value), "rtsp", source_value)
+            return
+        elif source_type == "image":
+            if not source_value:
+                return
+            self._switch_stream(ImageStream(source_value), "image", source_value)
+
+    def _switch_stream(self, new_stream, source_type, source_value):
+        if not new_stream.is_opened():
+            print(f"[ERROR] Cannot open source: {source_type}")
+            new_stream.release()
+            return
+
+        if self.stream is not None:
+            self.stream.release()
+        self.stream = new_stream
+        self.state.source_type = source_type
+        self.state.source_value = source_value
+        self.frame_idx = 0
 
 def main():
     app = App()
