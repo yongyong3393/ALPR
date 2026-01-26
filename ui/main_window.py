@@ -5,6 +5,7 @@ from ui.image_label import ImageLabel
 
 class MainWindow(QtWidgets.QMainWindow):
     closed = QtCore.Signal()
+    roi_finalized = QtCore.Signal(tuple)
 
     def __init__(self):
         super().__init__()
@@ -92,12 +93,10 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             self.statusBar().clearMessage()
 
-    def _on_roi_finalized(self, _roi):
+    def _on_roi_finalized(self, roi):
         if self.roi_action.isChecked():
             self.roi_action.setChecked(False)
-
-    def get_roi_rect(self):
-        return self.image_label.get_roi_rect()
+        self.roi_finalized.emit(roi)
 
     def show_frame(self, frame, box=None, ocr_text: str | None = None):
         # (1) Update plate text

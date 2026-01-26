@@ -22,6 +22,7 @@ class App:
         # 3. Load UI manager
         self.ui_manager = MainWindow()
         self.ui_manager.closed.connect(self.stop)
+        self.ui_manager.roi_finalized.connect(self._on_roi_finalized)
 
         # main loop state
         self.frame_idx = 0
@@ -63,11 +64,10 @@ class App:
         # ALPR every N frames
         self.frame_idx += 1
         if self.frame_idx % self.N == 0:
-            roi = self.ui_manager.get_roi_rect()
+            roi = self.state.roi_rect
             if roi is None:
                 h, w = frame.shape[:2]
                 roi = (0, 0, w - 1, h - 1)
-            self.state.roi_rect = roi
             self.alpr_worker.submit_frame(frame, roi)
 
         # Get latest OCR results
@@ -76,6 +76,8 @@ class App:
         # Visualize results on UI
         self.ui_manager.show_frame(frame, last_box, last_text)
 
+    def _on_roi_finalized(self, roi):
+        self.state.roi_rect = roi
 
 def main():
     app = App()
